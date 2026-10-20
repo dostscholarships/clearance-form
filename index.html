@@ -30,10 +30,18 @@
     background-image: linear-gradient(180deg, #e6ebf1 0%, #d3dbe4 100%);
     background-attachment: fixed;
     margin: 0;
-    padding: 30px 0 48px;
+    padding: 30px 16px 48px;
+  }
+
+  /* Layout container placing document and side toolbar next to each other */
+  .page-container {
     display: flex;
-    flex-direction: column;
-    align-items: center;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 24px;
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
   }
 
   /* Standard A4 Paper Layout (210mm x 297mm) */
@@ -45,6 +53,7 @@
     box-shadow: 0 1px 2px rgba(15,23,42,0.10), 0 8px 28px rgba(15,23,42,0.16), 0 24px 60px rgba(15,23,42,0.10);
     position: relative;
     color: #000000;
+    flex-shrink: 0;
   }
 
   /* Document Revision Box Top Right */
@@ -431,7 +440,7 @@
   }
   .picker-btn svg { width: 14px; height: 14px; }
 
-  /* Floating Movable Images */
+  /* Movable, Resizable & Rotatable Floating Image Wrapper */
   .floating-img-wrapper {
     position: absolute;
     display: block;
@@ -440,6 +449,7 @@
     -webkit-user-select: none;
     touch-action: none;
     z-index: 100;
+    transform-origin: center center;
   }
 
   .floating-img-wrapper.dragging { cursor: grabbing; z-index: 150; }
@@ -462,6 +472,7 @@
     outline-offset: 0;
   }
 
+  /* Delete Button */
   .floating-img-wrapper .btn-delete {
     position: absolute;
     top: -11px;
@@ -484,6 +495,7 @@
   .floating-img-wrapper .btn-delete:hover { background: #b91c1c; }
   .floating-img-wrapper .btn-delete:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
+  /* Resize Handle */
   .floating-img-wrapper .resize-handle {
     position: absolute;
     width: 14px;
@@ -499,12 +511,37 @@
     display: none;
   }
 
+  /* Rotate Handle */
+  .floating-img-wrapper .rotate-handle {
+    position: absolute;
+    top: -24px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 20px;
+    height: 20px;
+    background: var(--accent);
+    color: #ffffff;
+    border: 2px solid #ffffff;
+    border-radius: 50%;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    cursor: grab;
+    box-shadow: 0 2px 6px rgba(15,23,42,0.3);
+    touch-action: none;
+  }
+  .floating-img-wrapper .rotate-handle:active { cursor: grabbing; }
+  .floating-img-wrapper .rotate-handle svg { width: 12px; height: 12px; stroke-width: 2.5; }
+
   .floating-img-wrapper.selected .btn-delete,
   .floating-img-wrapper.selected .resize-handle,
+  .floating-img-wrapper.selected .rotate-handle,
   .floating-img-wrapper:focus-within .btn-delete,
-  .floating-img-wrapper:focus-within .resize-handle {
-    display: block;
+  .floating-img-wrapper:focus-within .resize-handle,
+  .floating-img-wrapper:focus-within .rotate-handle {
+    display: flex;
   }
+  .floating-img-wrapper.selected .btn-delete { display: block; }
 
   .paper.drop-active::after {
     content: "Drop images or signatures here";
@@ -523,13 +560,9 @@
     z-index: 300;
   }
 
-  /* Control Toolbar (Slim Rail Left) */
+  /* Control Toolbar situated on the right side */
   .btn-bar {
-    position: fixed;
-    top: 16px;
-    left: 16px;
-    z-index: 200;
-    width: 108px;
+    width: 110px;
     padding: 8px;
     display: flex;
     flex-direction: column;
@@ -540,6 +573,10 @@
     border: 1px solid var(--ui-border);
     border-radius: 16px;
     box-shadow: 0 1px 2px rgba(15,23,42,0.08), 0 8px 24px rgba(15,23,42,0.12);
+    flex-shrink: 0;
+    align-self: flex-start;
+    position: sticky;
+    top: 30px;
   }
 
   .btn-bar, .btn-bar * {
@@ -576,10 +613,6 @@
 
   .btn-secondary { background-color: #ffffff; color: var(--accent); border-color: var(--ui-border); }
   .btn-secondary:hover { background-color: var(--accent-soft); border-color: var(--accent); }
-
-  @media screen and (max-width: 1087px) {
-    body { align-items: flex-start; padding-left: 140px; }
-  }
 
   @media (prefers-reduced-motion: reduce) {
     * { transition: none !important; }
@@ -650,6 +683,11 @@
       margin: 0;
       padding: 0;
     }
+    .page-container {
+      display: block;
+      margin: 0;
+      padding: 0;
+    }
     .paper {
       box-shadow: none;
       width: 210mm;
@@ -657,7 +695,7 @@
       padding: 18mm 22mm;
       margin: 0;
     }
-    .btn-bar, .file-input-btn, .btn-delete, .resize-handle {
+    .btn-bar, .file-input-btn, .btn-delete, .resize-handle, .rotate-handle {
       display: none !important;
     }
     .floating-img-wrapper {
@@ -675,323 +713,325 @@
 </head>
 <body>
 
-<!-- Action Buttons Toolbar -->
-<div class="btn-bar" role="toolbar" aria-label="Form actions">
-  <button type="button" class="btn btn-secondary" onclick="triggerImageUpload()" title="Upload pictures or signatures. You can also drop images onto the form, drag to move, and pull the corner to resize." aria-label="Upload pictures or signatures">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-    <span class="btn-label">UPLOAD</span>
-  </button>
-  <button type="button" class="btn" onclick="window.print()" title="Print or save the form as a PDF" aria-label="Print or download as PDF">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-    <span class="btn-label">PRINT/<wbr>DOWNLOAD</span>
-  </button>
-</div>
+<div class="page-container">
+  <div class="paper" id="paperDoc">
+    <!-- Document Revision Box -->
+    <div class="rev-box">
+      STSD-STSS-F1<br>Rev. 0 / 07-04-11
+    </div>
 
-<div class="paper" id="paperDoc">
-  <!-- Document Revision Box -->
-  <div class="rev-box">
-    STSD-STSS-F1<br>Rev. 0 / 07-04-11
-  </div>
+    <!-- Document Header Title -->
+    <div class="title-header">
+      REQUEST FORM
+    </div>
 
-  <!-- Document Header Title -->
-  <div class="title-header">
-    REQUEST FORM
-  </div>
-
-  <!-- Top Right Date Section -->
-  <div class="top-date-container">
-    <div class="date-block">
-      <div class="date-wrapper">
-        <input type="text" class="inp-line text-date" placeholder="Month DD, YYYY">
-        <input type="date" class="picker-date" onchange="formatDate(this)" tabindex="-1" aria-hidden="true">
-        <button type="button" class="picker-btn" onclick="openDatePicker(this)" aria-label="Pick a date" title="Pick a date"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></button>
+    <!-- Top Right Date Section -->
+    <div class="top-date-container">
+      <div class="date-block">
+        <div class="date-wrapper">
+          <input type="text" class="inp-line text-date" placeholder="Month DD, YYYY">
+          <input type="date" class="picker-date" onchange="formatDate(this)" tabindex="-1" aria-hidden="true">
+          <button type="button" class="picker-btn" onclick="openDatePicker(this)" aria-label="Pick a date" title="Pick a date"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></button>
+        </div>
+        <span class="lbl-sub">Date</span>
       </div>
-      <span class="lbl-sub">Date</span>
-    </div>
-  </div>
-
-  <!-- Recipient Address Section -->
-  <div class="header-address-block">
-    <span class="prefix-lbl">To</span>
-    <span class="prefix-colon">:</span>
-    <div class="address-content bold-text">
-      <span>THE DIVISION CHIEF</span>
-      <span style="font-weight: 400;">Science and Technology Scholarship Division</span>
-      <span style="font-weight: 400;">Science Education Institute</span>
     </div>
 
-    <span class="prefix-lbl">Re</span>
-    <span class="prefix-colon">:</span>
-    <div class="address-content bold-text">
-      <span>REQUEST FOR SCHOLARSHIP CLEARANCE</span>
+    <!-- Recipient Address Section -->
+    <div class="header-address-block">
+      <span class="prefix-lbl">To</span>
+      <span class="prefix-colon">:</span>
+      <div class="address-content bold-text">
+        <span>THE DIVISION CHIEF</span>
+        <span style="font-weight: 400;">Science and Technology Scholarship Division</span>
+        <span style="font-weight: 400;">Science Education Institute</span>
+      </div>
+
+      <span class="prefix-lbl">Re</span>
+      <span class="prefix-colon">:</span>
+      <div class="address-content bold-text">
+        <span>REQUEST FOR SCHOLARSHIP CLEARANCE</span>
+      </div>
     </div>
-  </div>
 
-  <!-- Intro Text Aligned under THE DIVISION CHIEF -->
-  <div class="request-intro-container">
-    <div class="request-intro-text">
-      This is to request for the issuance of clearance:
+    <!-- Intro Text Aligned under THE DIVISION CHIEF -->
+    <div class="request-intro-container">
+      <div class="request-intro-text">
+        This is to request for the issuance of clearance:
+      </div>
     </div>
-  </div>
 
-  <!-- Matrix Requirements Table -->
-  <table class="req-table">
-    <thead>
-      <tr>
-        <th class="col-check-desc">Please check the needed documents</th>
-        <th class="col-req-list">Requirements</th>
-      </tr>
-    </thead>
-    <tbody>
-      <!-- Row 1 -->
-      <tr>
-        <td class="col-check-desc">
-          <label class="cb-item">
-            <input type="checkbox">
-            <span>For NBI – Clearance for local employment</span>
-          </label>
-        </td>
-        <td class="col-req-list">
-          <label class="cb-item">
-            <input type="checkbox">
-            <span>Transcript of Records or True Copy of Grades or diploma for scholar-graduate; or</span>
-          </label>
-          <label class="cb-item">
-            <input type="checkbox">
-            <span>Registration form for OJT/SIT certification from school for on-going scholar</span>
-          </label>
-          <div class="table-note">Note: On-going scholar – for OJT/SIT purpose only</div>
-        </td>
-      </tr>
-
-      <!-- Row 2 -->
-      <tr>
-        <td class="col-check-desc">
-          <label class="cb-item">
-            <input type="checkbox">
-            <span>For NBI – Clearance for application for passport</span>
-          </label>
-        </td>
-        <td class="col-req-list" rowspan="3" style="vertical-align: top;">
-          <label class="cb-item">
-            <input type="checkbox">
-            <span>Guaranty letter or</span>
-          </label>
-          <label class="cb-item">
-            <input type="checkbox">
-            <span>Deed of Undertaking* or</span>
-          </label>
-          <label class="cb-item">
-            <input type="checkbox">
-            <span>Official Receipt of cash bond posted or</span>
-          </label>
-          <label class="cb-item">
-            <input type="checkbox">
-            <span>Original copy of GSIS Surety Bond</span>
-          </label>
-          <div class="foot-note-asterisk">
-            * Photocopy of I.D. and ITR or Certificate of Employment of co-maker
-          </div>
-        </td>
-      </tr>
-
-      <!-- Row 3 -->
-      <tr>
-        <td class="col-check-desc">
-          <label class="cb-item">
-            <input type="checkbox">
-            <span>For DFA – Passport</span>
-          </label>
-        </td>
-      </tr>
-
-      <!-- Row 4 -->
-      <tr>
-        <td class="col-check-desc">
-          <label class="cb-item">
-            <input type="checkbox">
-            <span>For BI – Travel Order</span>
-          </label>
-        </td>
-      </tr>
-
-      <!-- Row 5 -->
-      <tr>
-        <td class="col-check-desc">
-          <label class="cb-item">
-            <input type="checkbox">
-            <span>Final clearance</span>
-          </label>
-        </td>
-        <td class="col-req-list">
-          <label class="cb-item">
-            <input type="checkbox">
-            <span>Certificate/s of Employment/Service Record or</span>
-          </label>
-          <label class="cb-item">
-            <input type="checkbox">
-            <span>Official Receipt of refund of scholarship benefits received</span>
-          </label>
-        </td>
-      </tr>
-
-      <!-- Row 6 -->
-      <tr>
-        <td class="col-check-desc">
-          <label class="cb-item">
-            <input type="checkbox">
-            <span>Computation of scholarship benefits received</span>
-          </label>
-        </td>
-        <td class="col-req-list">
-          <label class="cb-item">
-            <input type="checkbox">
-            <span>Transcript of Records or True Copy of Grades and/or</span>
-          </label>
-          <label class="cb-item">
-            <input type="checkbox">
-            <span>Certificate of Employment</span>
-          </label>
-        </td>
-      </tr>
-
-      <!-- Row 7 -->
-      <tr>
-        <td class="col-check-desc">
-          <label class="cb-item">
-            <input type="checkbox">
-            <span>Others (Please specify.):</span>
-          </label>
-        </td>
-        <td class="col-req-list">
-          <input type="text" class="inp-line" style="width: 100%;">
-        </td>
-      </tr>
-    </tbody>
-  </table>
-
-  <!-- Purpose Form Lines -->
-  <div class="form-row">
-    <span class="lbl">Purpose:</span>
-    <input type="text" class="inp-line">
-  </div>
-  <div class="form-row" style="margin-bottom: 12px;">
-    <input type="text" class="inp-line">
-  </div>
-
-  <!-- Requested By Section -->
-  <div class="scholar-info-section">
-    <div class="requested-by-lbl">Requested by:</div>
-    <div class="form-row">
-      <span class="lbl">Name of Scholar/Signature:</span>
-      <input type="text" class="inp-line">
-      <span class="lbl" style="margin-left: 20px;">Sex:</span>
-      <input type="text" class="inp-line" style="max-width: 140px; flex: none;">
-    </div>
-    <div class="form-row">
-      <span class="lbl">Contact Number:</span>
-      <input type="text" class="inp-line inp-contact" maxlength="12">
-      <span class="lbl" style="margin-left: 20px;">E-mail Address:</span>
-      <input type="text" class="inp-line">
-    </div>
-  </div>
-
-  <!-- Scholarship Information Matrix Table -->
-  <table class="scholar-grid-table">
-    <thead>
-      <tr>
-        <th style="width: 22%;">DOST Scholarship<br>Category</th>
-        <th style="width: 18%;">DOST Scholarship<br>Program</th>
-        <th style="width: 11%;">Year of<br>Award</th>
-        <th style="width: 32%;">Course</th>
-        <th style="width: 17%;">School</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td class="cat-cell">Undergraduate</td>
-        <td><input type="text"></td>
-        <td><input type="text"></td>
-        <td><input type="text"></td>
-        <td><input type="text"></td>
-      </tr>
-      <tr>
-        <td class="cat-cell">MS</td>
-        <td><input type="text"></td>
-        <td><input type="text"></td>
-        <td><input type="text"></td>
-        <td><input type="text"></td>
-      </tr>
-      <tr>
-        <td class="cat-cell">Ph.D</td>
-        <td><input type="text"></td>
-        <td><input type="text"></td>
-        <td><input type="text"></td>
-        <td><input type="text"></td>
-      </tr>
-    </tbody>
-  </table>
-
-  <!-- Divider -->
-  <hr class="double-divider">
-
-  <!-- Office Authorization Block -->
-  <div class="staff-section">
-    <div class="staff-header">(To be filled out by SEI Staff)</div>
-    
-    <table class="staff-table">
+    <!-- Matrix Requirements Table -->
+    <table class="req-table">
       <thead>
         <tr>
-          <th style="width: 24%;">Category</th>
-          <th style="width: 18%;">Status</th>
-          <th style="width: 36%;">Effective on</th>
-          <th style="width: 12%;">Verified by</th>
-          <th style="width: 10%;">Date</th>
+          <th class="col-check-desc">Please check the needed documents</th>
+          <th class="col-req-list">Requirements</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Row 1 -->
+        <tr>
+          <td class="col-check-desc">
+            <label class="cb-item">
+              <input type="checkbox">
+              <span>For NBI – Clearance for local employment</span>
+            </label>
+          </td>
+          <td class="col-req-list">
+            <label class="cb-item">
+              <input type="checkbox">
+              <span>Transcript of Records or True Copy of Grades or diploma for scholar-graduate; or</span>
+            </label>
+            <label class="cb-item">
+              <input type="checkbox">
+              <span>Registration form for OJT/SIT certification from school for on-going scholar</span>
+            </label>
+            <div class="table-note">Note: On-going scholar – for OJT/SIT purpose only</div>
+          </td>
+        </tr>
+
+        <!-- Row 2 -->
+        <tr>
+          <td class="col-check-desc">
+            <label class="cb-item">
+              <input type="checkbox">
+              <span>For NBI – Clearance for application for passport</span>
+            </label>
+          </td>
+          <td class="col-req-list" rowspan="3" style="vertical-align: top;">
+            <label class="cb-item">
+              <input type="checkbox">
+              <span>Guaranty letter or</span>
+            </label>
+            <label class="cb-item">
+              <input type="checkbox">
+              <span>Deed of Undertaking* or</span>
+            </label>
+            <label class="cb-item">
+              <input type="checkbox">
+              <span>Official Receipt of cash bond posted or</span>
+            </label>
+            <label class="cb-item">
+              <input type="checkbox">
+              <span>Original copy of GSIS Surety Bond</span>
+            </label>
+            <div class="foot-note-asterisk">
+              * Photocopy of I.D. and ITR or Certificate of Employment of co-maker
+            </div>
+          </td>
+        </tr>
+
+        <!-- Row 3 -->
+        <tr>
+          <td class="col-check-desc">
+            <label class="cb-item">
+              <input type="checkbox">
+              <span>For DFA – Passport</span>
+            </label>
+          </td>
+        </tr>
+
+        <!-- Row 4 -->
+        <tr>
+          <td class="col-check-desc">
+            <label class="cb-item">
+              <input type="checkbox">
+              <span>For BI – Travel Order</span>
+            </label>
+          </td>
+        </tr>
+
+        <!-- Row 5 -->
+        <tr>
+          <td class="col-check-desc">
+            <label class="cb-item">
+              <input type="checkbox">
+              <span>Final clearance</span>
+            </label>
+          </td>
+          <td class="col-req-list">
+            <label class="cb-item">
+              <input type="checkbox">
+              <span>Certificate/s of Employment/Service Record or</span>
+            </label>
+            <label class="cb-item">
+              <input type="checkbox">
+              <span>Official Receipt of refund of scholarship benefits received</span>
+            </label>
+          </td>
+        </tr>
+
+        <!-- Row 6 -->
+        <tr>
+          <td class="col-check-desc">
+            <label class="cb-item">
+              <input type="checkbox">
+              <span>Computation of scholarship benefits received</span>
+            </label>
+          </td>
+          <td class="col-req-list">
+            <label class="cb-item">
+              <input type="checkbox">
+              <span>Transcript of Records or True Copy of Grades and/or</span>
+            </label>
+            <label class="cb-item">
+              <input type="checkbox">
+              <span>Certificate of Employment</span>
+            </label>
+          </td>
+        </tr>
+
+        <!-- Row 7 -->
+        <tr>
+          <td class="col-check-desc">
+            <label class="cb-item">
+              <input type="checkbox">
+              <span>Others (Please specify.):</span>
+            </label>
+          </td>
+          <td class="col-req-list">
+            <input type="text" class="inp-line" style="width: 100%;">
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Purpose Form Lines -->
+    <div class="form-row">
+      <span class="lbl">Purpose:</span>
+      <input type="text" class="inp-line">
+    </div>
+    <div class="form-row" style="margin-bottom: 12px;">
+      <input type="text" class="inp-line">
+    </div>
+
+    <!-- Requested By Section -->
+    <div class="scholar-info-section">
+      <div class="requested-by-lbl">Requested by:</div>
+      <div class="form-row">
+        <span class="lbl">Name of Scholar/Signature:</span>
+        <input type="text" class="inp-line">
+        <span class="lbl" style="margin-left: 20px;">Sex:</span>
+        <input type="text" class="inp-line" style="max-width: 140px; flex: none;">
+      </div>
+      <div class="form-row">
+        <span class="lbl">Contact Number:</span>
+        <input type="text" class="inp-line inp-contact" maxlength="12">
+        <span class="lbl" style="margin-left: 20px;">E-mail Address:</span>
+        <input type="text" class="inp-line">
+      </div>
+    </div>
+
+    <!-- Scholarship Information Matrix Table -->
+    <table class="scholar-grid-table">
+      <thead>
+        <tr>
+          <th style="width: 22%;">DOST Scholarship<br>Category</th>
+          <th style="width: 18%;">DOST Scholarship<br>Program</th>
+          <th style="width: 11%;">Year of<br>Award</th>
+          <th style="width: 32%;">Course</th>
+          <th style="width: 17%;">School</th>
         </tr>
       </thead>
       <tbody>
         <tr>
-          <td style="text-align: left;">Undergraduate</td>
+          <td class="cat-cell">Undergraduate</td>
           <td><input type="text"></td>
-          <td style="text-align: left; font-size: 10px;">
-            ( ) 1<sup>st</sup> ( ) 2<sup>nd</sup> ( ) 3<sup>rd</sup> ( ) 4<sup>th</sup> Sem, AY <input type="text" style="width: 60px; display: inline-block; border-bottom: 1px solid #000;">
-          </td>
+          <td><input type="text"></td>
           <td><input type="text"></td>
           <td><input type="text"></td>
         </tr>
         <tr>
-          <td style="text-align: left;">( ) MS &nbsp; ( ) Ph.D</td>
+          <td class="cat-cell">MS</td>
           <td><input type="text"></td>
-          <td style="text-align: left; font-size: 10px;">
-            ( ) 1<sup>st</sup> ( ) 2<sup>nd</sup> ( ) 3<sup>rd</sup> ( ) 4<sup>th</sup> Sem, AY <input type="text" style="width: 60px; display: inline-block; border-bottom: 1px solid #000;">
-          </td>
+          <td><input type="text"></td>
+          <td><input type="text"></td>
+          <td><input type="text"></td>
+        </tr>
+        <tr>
+          <td class="cat-cell">Ph.D</td>
+          <td><input type="text"></td>
+          <td><input type="text"></td>
           <td><input type="text"></td>
           <td><input type="text"></td>
         </tr>
       </tbody>
     </table>
 
-    <div class="staff-form-row">
-      <span class="lbl">Request processed by</span>
-      <input type="text" class="inp-line">
-      <span class="lbl" style="margin-left: 20px;">Date</span>
-      <div class="date-wrapper" style="max-width: 180px; flex: none;">
-        <input type="text" class="inp-line text-date" placeholder="Month DD, YYYY">
-        <input type="date" class="picker-date" onchange="formatDate(this)" tabindex="-1" aria-hidden="true">
-        <button type="button" class="picker-btn" onclick="openDatePicker(this)" aria-label="Pick a date" title="Pick a date"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></button>
-      </div>
-    </div>
+    <!-- Divider -->
+    <hr class="double-divider">
 
-    <div class="staff-form-row">
-      <span class="lbl">Mode of release Picked-up/mailed/faxed</span>
-      <input type="text" class="inp-line">
-      <span class="lbl" style="margin-left: 20px;">Date</span>
-      <div class="date-wrapper" style="max-width: 180px; flex: none;">
-        <input type="text" class="inp-line text-date" placeholder="Month DD, YYYY">
-        <input type="date" class="picker-date" onchange="formatDate(this)" tabindex="-1" aria-hidden="true">
-        <button type="button" class="picker-btn" onclick="openDatePicker(this)" aria-label="Pick a date" title="Pick a date"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></button>
+    <!-- Office Authorization Block -->
+    <div class="staff-section">
+      <div class="staff-header">(To be filled out by SEI Staff)</div>
+      
+      <table class="staff-table">
+        <thead>
+          <tr>
+            <th style="width: 24%;">Category</th>
+            <th style="width: 18%;">Status</th>
+            <th style="width: 36%;">Effective on</th>
+            <th style="width: 12%;">Verified by</th>
+            <th style="width: 10%;">Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="text-align: left;">Undergraduate</td>
+            <td><input type="text"></td>
+            <td style="text-align: left; font-size: 10px;">
+              ( ) 1<sup>st</sup> ( ) 2<sup>nd</sup> ( ) 3<sup>rd</sup> ( ) 4<sup>th</sup> Sem, AY <input type="text" style="width: 60px; display: inline-block; border-bottom: 1px solid #000;">
+            </td>
+            <td><input type="text"></td>
+            <td><input type="text"></td>
+          </tr>
+          <tr>
+            <td style="text-align: left;">( ) MS &nbsp; ( ) Ph.D</td>
+            <td><input type="text"></td>
+            <td style="text-align: left; font-size: 10px;">
+              ( ) 1<sup>st</sup> ( ) 2<sup>nd</sup> ( ) 3<sup>rd</sup> ( ) 4<sup>th</sup> Sem, AY <input type="text" style="width: 60px; display: inline-block; border-bottom: 1px solid #000;">
+            </td>
+            <td><input type="text"></td>
+            <td><input type="text"></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="staff-form-row">
+        <span class="lbl">Request processed by</span>
+        <input type="text" class="inp-line">
+        <span class="lbl" style="margin-left: 20px;">Date</span>
+        <div class="date-wrapper" style="max-width: 180px; flex: none;">
+          <input type="text" class="inp-line text-date" placeholder="Month DD, YYYY">
+          <input type="date" class="picker-date" onchange="formatDate(this)" tabindex="-1" aria-hidden="true">
+          <button type="button" class="picker-btn" onclick="openDatePicker(this)" aria-label="Pick a date" title="Pick a date"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></button>
+        </div>
+      </div>
+
+      <div class="staff-form-row">
+        <span class="lbl">Mode of release Picked-up/mailed/faxed</span>
+        <input type="text" class="inp-line">
+        <span class="lbl" style="margin-left: 20px;">Date</span>
+        <div class="date-wrapper" style="max-width: 180px; flex: none;">
+          <input type="text" class="inp-line text-date" placeholder="Month DD, YYYY">
+          <input type="date" class="picker-date" onchange="formatDate(this)" tabindex="-1" aria-hidden="true">
+          <button type="button" class="picker-btn" onclick="openDatePicker(this)" aria-label="Pick a date" title="Pick a date"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></button>
+        </div>
       </div>
     </div>
+  </div>
+
+  <!-- Action Buttons Toolbar on the Right -->
+  <div class="btn-bar" role="toolbar" aria-label="Form actions">
+    <button type="button" class="btn btn-secondary" onclick="triggerImageUpload()" title="Upload pictures or signatures. You can also drop images onto the form, drag to move, pull the corner to resize, or spin the top handle to rotate." aria-label="Upload pictures or signatures">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      <span class="btn-label">UPLOAD</span>
+    </button>
+    <button type="button" class="btn" onclick="window.print()" title="Print or save the form as a PDF" aria-label="Print or download as PDF">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+      <span class="btn-label">PRINT/<wbr>DOWNLOAD</span>
+    </button>
   </div>
 </div>
 
@@ -1200,6 +1240,7 @@
     wrapper.tabIndex = 0;
     wrapper.style.width = '140px';
     wrapper.style.height = '80px';
+    wrapper.dataset.rotation = '0';
 
     const img = document.createElement('img');
     img.alt = '';
@@ -1228,22 +1269,33 @@
     resizeHandle.className = 'resize-handle';
     resizeHandle.title = 'Drag to resize';
 
+    const rotateHandle = document.createElement('div');
+    rotateHandle.className = 'rotate-handle';
+    rotateHandle.title = 'Drag to rotate';
+    rotateHandle.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>';
+
     wrapper.appendChild(img);
     wrapper.appendChild(delBtn);
     wrapper.appendChild(resizeHandle);
+    wrapper.appendChild(rotateHandle);
     wrapper.style.top = topPos + 'px';
     wrapper.style.left = leftPos + 'px';
     paper.appendChild(wrapper);
 
-    makeElementInteractive(wrapper, resizeHandle);
+    makeElementInteractive(wrapper, resizeHandle, rotateHandle);
     deselectAllExcept(wrapper);
   }
 
-  function makeElementInteractive(elmnt, resizeHandle) {
+  function applyRotation(el, angle) {
+    el.dataset.rotation = angle;
+    el.style.transform = `rotate(${angle}deg)`;
+  }
+
+  function makeElementInteractive(elmnt, resizeHandle, rotateHandle) {
     let startX, startY, origLeft, origTop, dragging = false;
 
     elmnt.addEventListener('pointerdown', function(e) {
-      if (e.target.classList.contains('btn-delete') || e.target.classList.contains('resize-handle')) return;
+      if (e.target.classList.contains('btn-delete') || e.target.classList.contains('resize-handle') || e.target.closest('.rotate-handle')) return;
       e.preventDefault();
       deselectAllExcept(elmnt);
       elmnt.classList.add('selected', 'dragging');
@@ -1263,7 +1315,17 @@
     elmnt.addEventListener('pointerup', stopDrag);
     elmnt.addEventListener('pointercancel', stopDrag);
 
+    // Keyboard controls
     elmnt.addEventListener('keydown', function(e) {
+      let currentAngle = parseFloat(elmnt.dataset.rotation) || 0;
+
+      if (e.key === 'r' || e.key === 'R') {
+        e.preventDefault();
+        const delta = e.shiftKey ? -15 : 15;
+        applyRotation(elmnt, (currentAngle + delta) % 360);
+        return;
+      }
+
       const step = e.shiftKey ? 10 : 1;
       let dx = 0, dy = 0;
       if (e.key === 'ArrowLeft') dx = -step;
@@ -1278,6 +1340,7 @@
       moveTo(elmnt, elmnt.offsetLeft + dx, elmnt.offsetTop + dy);
     });
 
+    // Resize handling
     let resizing = false, rStartX, rStartW, rRatio;
 
     resizeHandle.addEventListener('pointerdown', function(e) {
@@ -1302,6 +1365,34 @@
     function stopResize() { resizing = false; }
     resizeHandle.addEventListener('pointerup', stopResize);
     resizeHandle.addEventListener('pointercancel', stopResize);
+
+    // Rotate handling
+    let rotating = false, centerPX, centerPY, startAngle, initialRotation;
+
+    rotateHandle.addEventListener('pointerdown', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      rotating = true;
+      rotateHandle.setPointerCapture(e.pointerId);
+
+      const rect = elmnt.getBoundingClientRect();
+      centerPX = rect.left + rect.width / 2;
+      centerPY = rect.top + rect.height / 2;
+
+      startAngle = Math.atan2(e.clientY - centerPY, e.clientX - centerPX) * (180 / Math.PI);
+      initialRotation = parseFloat(elmnt.dataset.rotation) || 0;
+    });
+
+    rotateHandle.addEventListener('pointermove', function(e) {
+      if (!rotating) return;
+      const currentAngle = Math.atan2(e.clientY - centerPY, e.clientX - centerPX) * (180 / Math.PI);
+      const angleDiff = currentAngle - startAngle;
+      applyRotation(elmnt, Math.round(initialRotation + angleDiff));
+    });
+
+    function stopRotate() { rotating = false; }
+    rotateHandle.addEventListener('pointerup', stopRotate);
+    rotateHandle.addEventListener('pointercancel', stopRotate);
   }
 
   function deselectAllExcept(target) {
