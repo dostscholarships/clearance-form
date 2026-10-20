@@ -167,28 +167,15 @@
     flex: none;
   }
 
-  /* Multiline Dynamic Table Cell Field */
-  .cell-editable {
-    width: 100%;
-    min-height: 18px;
-    border: none;
-    outline: none;
-    font-size: 11px;
-    line-height: 1.25;
-    text-align: center;
-    background: transparent;
-    word-break: break-word;
-    white-space: pre-wrap;
-    padding: 2px;
-  }
-
   /* Field and checkbox interaction states: screen only */
   @media screen {
-    .inp-line, .cell-editable {
+    .inp-line {
       transition: background-color 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease;
     }
-    .inp-line:focus, .cell-editable:focus {
+    .inp-line:focus {
       background-color: var(--accent-soft);
+      border-bottom-color: var(--accent);
+      box-shadow: 0 1px 0 var(--accent);
     }
     .cb-item input[type="checkbox"] {
       transition: border-color 0.12s ease, box-shadow 0.12s ease, background-color 0.12s ease;
@@ -207,7 +194,7 @@
   }
 
   @media screen and (hover: hover) {
-    .inp-line:hover:not(:focus), .cell-editable:hover:not(:focus) { background-color: rgba(0, 68, 102, 0.045); }
+    .inp-line:hover:not(:focus) { background-color: rgba(0, 68, 102, 0.045); }
     .cb-item:hover input[type="checkbox"] { box-shadow: 0 0 0 3px var(--accent-ring); }
     .picker-btn { opacity: 0.75; transition: opacity 0.12s ease; }
     .picker-btn:hover { opacity: 1; }
@@ -320,7 +307,7 @@
   .scholar-grid-table th, .scholar-grid-table td {
     border: 1px solid var(--line-black);
     padding: 4px;
-    min-height: 22px;
+    height: 22px;
   }
 
   .scholar-grid-table th {
@@ -338,6 +325,15 @@
     text-align: left;
     font-weight: 400;
     padding-left: 6px;
+  }
+
+  .scholar-grid-table td input[type="text"] {
+    width: 100%;
+    border: none;
+    outline: none;
+    font-size: 11px;
+    text-align: center;
+    background: transparent;
   }
 
   /* Separator Double Line */
@@ -373,6 +369,14 @@
 
   .staff-table th {
     font-weight: 700;
+  }
+
+  .staff-table td input[type="text"] {
+    width: 100%;
+    border: none;
+    outline: none;
+    font-size: 11px;
+    background: transparent;
   }
 
   .staff-form-row {
@@ -906,24 +910,24 @@
     <tbody>
       <tr>
         <td class="cat-cell">Undergraduate</td>
-        <td><div class="cell-editable" contenteditable="true" role="textbox"></div></td>
-        <td><div class="cell-editable" contenteditable="true" role="textbox"></div></td>
-        <td><div class="cell-editable" contenteditable="true" role="textbox"></div></td>
-        <td><div class="cell-editable" contenteditable="true" role="textbox"></div></td>
+        <td><input type="text"></td>
+        <td><input type="text"></td>
+        <td><input type="text"></td>
+        <td><input type="text"></td>
       </tr>
       <tr>
         <td class="cat-cell">MS</td>
-        <td><div class="cell-editable" contenteditable="true" role="textbox"></div></td>
-        <td><div class="cell-editable" contenteditable="true" role="textbox"></div></td>
-        <td><div class="cell-editable" contenteditable="true" role="textbox"></div></td>
-        <td><div class="cell-editable" contenteditable="true" role="textbox"></div></td>
+        <td><input type="text"></td>
+        <td><input type="text"></td>
+        <td><input type="text"></td>
+        <td><input type="text"></td>
       </tr>
       <tr>
         <td class="cat-cell">Ph.D</td>
-        <td><div class="cell-editable" contenteditable="true" role="textbox"></div></td>
-        <td><div class="cell-editable" contenteditable="true" role="textbox"></div></td>
-        <td><div class="cell-editable" contenteditable="true" role="textbox"></div></td>
-        <td><div class="cell-editable" contenteditable="true" role="textbox"></div></td>
+        <td><input type="text"></td>
+        <td><input type="text"></td>
+        <td><input type="text"></td>
+        <td><input type="text"></td>
       </tr>
     </tbody>
   </table>
@@ -948,21 +952,21 @@
       <tbody>
         <tr>
           <td style="text-align: left;">Undergraduate</td>
-          <td><div class="cell-editable" contenteditable="true" role="textbox"></div></td>
+          <td><input type="text"></td>
           <td style="text-align: left; font-size: 10px;">
             ( ) 1<sup>st</sup> ( ) 2<sup>nd</sup> ( ) 3<sup>rd</sup> ( ) 4<sup>th</sup> Sem, AY <input type="text" style="width: 60px; display: inline-block; border-bottom: 1px solid #000;">
           </td>
-          <td><div class="cell-editable" contenteditable="true" role="textbox"></div></td>
-          <td><div class="cell-editable" contenteditable="true" role="textbox"></div></td>
+          <td><input type="text"></td>
+          <td><input type="text"></td>
         </tr>
         <tr>
           <td style="text-align: left;">( ) MS &nbsp; ( ) Ph.D</td>
-          <td><div class="cell-editable" contenteditable="true" role="textbox"></div></td>
+          <td><input type="text"></td>
           <td style="text-align: left; font-size: 10px;">
             ( ) 1<sup>st</sup> ( ) 2<sup>nd</sup> ( ) 3<sup>rd</sup> ( ) 4<sup>th</sup> Sem, AY <input type="text" style="width: 60px; display: inline-block; border-bottom: 1px solid #000;">
           </td>
-          <td><div class="cell-editable" contenteditable="true" role="textbox"></div></td>
-          <td><div class="cell-editable" contenteditable="true" role="textbox"></div></td>
+          <td><input type="text"></td>
+          <td><input type="text"></td>
         </tr>
       </tbody>
     </table>
